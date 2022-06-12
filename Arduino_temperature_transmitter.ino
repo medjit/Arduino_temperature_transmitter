@@ -12,13 +12,14 @@
 
 #define MAX_TEMP            90
 
-#define SEND_INTERVAL       10000
-#define TEMP_READ_INTERVAL  5000
+#define SEND_INTERVAL       3000
+#define TEMP_READ_INTERVAL  2000
 
 unsigned long last_sent = 0;
 unsigned long last_read = 0;
 boolean err = false;
 float temp = 0;
+byte err_count = 0;
 
 OneWire oneWire(DS18B20_GPIO);
 DallasTemperature sensors(&oneWire);
@@ -42,12 +43,15 @@ void loop()
     last_read = millis();
   }
   if (temp == DEVICE_DISCONNECTED_C && !err) {
+    if (err_count < 255) err_count++;
     digitalWrite(BUZZER_GPIO, HIGH);
     delay(1000);
     digitalWrite(BUZZER_GPIO, LOW);
     delay(1000);
+  }else{
+    err_count = 0;
   }
-  if(temp >= MAX_TEMP){
+  if(temp >= MAX_TEMP || err_count > 150){
     err = true;
     digitalWrite(BUZZER_GPIO, HIGH);
     digitalWrite(HEATER_GPIO, LOW);
